@@ -53,7 +53,7 @@ namespace Sudoku.Benchmark
                 {
                     if (RunMenu())
                     {
-                        return;
+                        Environment.Exit(0);
                     }
 
                 }
@@ -63,7 +63,7 @@ namespace Sudoku.Benchmark
                     {
                         if (RunMenu())
                         {
-                            return;
+                            Environment.Exit(0); 
                         }
                     }
                     catch (Exception e)
