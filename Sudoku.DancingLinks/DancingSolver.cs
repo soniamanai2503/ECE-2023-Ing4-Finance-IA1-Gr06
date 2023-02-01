@@ -1,13 +1,14 @@
-﻿using Sudoku.Shared;
+using DlxLib;
+using Sudoku.Shared;
 
-namespace Sudoku.DancingLinks
+namespace Sudoku.DlxLib;
+public class DlxLibSolver : ISudokuSolver
 {
-    public class DancingSolver :ISudokuSolver
+    public SudokuGrid Solve(SudokuGrid s)
     {
-        public SudokuGrid Solve(SudokuGrid s)
-    {
-        return s.CloneSudoku();
+        Dlx.MatrixList dlxList = new Dlx.MatrixList(s.Cells);
+        dlxList.search();
+        s.Cells = dlxList.convertMatrixSudoku();
+        return s;
     }
-
-}
 }
