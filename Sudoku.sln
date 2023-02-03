@@ -18,6 +18,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sudoku.Z3Solvers", "Sudoku.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sudoku.Backtracking", "Sudoku.Backtracking\Sudoku.Backtracking.csproj", "{4A7DB2C7-3027-4EBD-92FB-3316831FAD0A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sudoku.DancingLinks", "Sudoku.DancingLinks\Sudoku.DancingLinks.csproj", "{B5CA730B-F12D-47E4-9AC5-DB6EFDC749BA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +42,10 @@ Global
 		{4A7DB2C7-3027-4EBD-92FB-3316831FAD0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A7DB2C7-3027-4EBD-92FB-3316831FAD0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4A7DB2C7-3027-4EBD-92FB-3316831FAD0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5CA730B-F12D-47E4-9AC5-DB6EFDC749BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5CA730B-F12D-47E4-9AC5-DB6EFDC749BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5CA730B-F12D-47E4-9AC5-DB6EFDC749BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5CA730B-F12D-47E4-9AC5-DB6EFDC749BA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
