@@ -2,6 +2,7 @@
 using System.Resources;
 using Sudoku.Shared;
 
+
 namespace Sudoku.Backtracking
 {
     public class Backtrackingsolver1 : PythonSolverBase
@@ -21,7 +22,7 @@ namespace Sudoku.Backtracking
                 PyObject pyCells = s.Cells.ToPython();
 
                 // create a Python variable "person"
-                scope.Set("person", pyCells);
+                scope.Set("instance", pyCells);
 
                 // the person object may now be used in Python
                 string code = Resource1.Backtracking_py;

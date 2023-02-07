@@ -1,5 +1,31 @@
-import numpy as np
 
+#solvedSudoku = netSolver.Solve(sudoku)
+#instance = ((0,0,0,0,9,4,0,3,0),
+#           (0,0,0,5,1,0,0,0,7),
+#           (0,8,9,0,0,0,0,4,0),
+#           (0,0,0,0,0,0,2,0,8),
+#           (0,6,0,2,0,1,0,5,0),
+#           (1,0,2,0,0,0,0,0,0),
+#           (0,7,0,0,0,0,5,2,0),
+#           (9,0,0,0,6,5,0,0,0),
+#           (0,4,0,9,7,0,0,0,0))
+
+
+
+from timeit import default_timer
+import numpy as np
+'''instance = ((0,0,0,0,9,0,0,3,0),
+            (0,0,0,5,1,0,0,0,7),
+            (0,8,9,0,0,0,0,0,0),
+            (0,0,0,0,0,0,2,0,8),
+            (0,6,0,0,0,1,0,5,0),
+            (1,0,2,0,0,0,0,0,0),
+            (0,7,0,0,0,0,5,2,0),
+            (9,0,0,0,6,5,0,0,0),
+            (0,4,0,9,7,0,0,0,0))
+            
+grid=np.array(instance)
+'''
 def findNextCellToFill(grid, i, j):
         for x in range(i,9):
                 for y in range(j,9):
@@ -37,15 +63,15 @@ def solveSudoku(grid, i=0, j=0):
                         # Undo the current cell for backtracking
                         grid[i][j] = 0
         return False
-person=solveSudoku(grid,i=0 ,j=0)
-#solvedSudoku = netSolver.Solve(sudoku)
-#instance = ((0,0,0,0,9,4,0,3,0),
-#           (0,0,0,5,1,0,0,0,7),
-#            (0,8,9,0,0,0,0,4,0),
-#            (0,0,0,0,0,0,2,0,8),
-#           (0,6,0,2,0,1,0,5,0),
-#           (1,0,2,0,0,0,0,0,0),
- #           (0,7,0,0,0,0,5,2,0),
- #           (9,0,0,0,6,5,0,0,0),
- #           (0,4,0,9,7,0,0,0,0))
-r=instance
+
+start = default_timer()
+if(solveSudoku(instance)):
+	#print_grid(instance)
+	r=instance
+else:
+	print ("Aucune solution trouvée")
+
+execution = default_timer() - start
+print("Le temps de résolution est de : ", execution, " seconds as a floating point value")
+
+
