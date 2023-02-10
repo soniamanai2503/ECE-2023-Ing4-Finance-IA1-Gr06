@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Python.Deployment;
 using Python.Runtime;
+using Sudoku.Shared.PythonIncluded;
 
 namespace Sudoku.Shared
 {

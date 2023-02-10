@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Sudoku.Shared
+namespace Sudoku.Shared.PythonIncluded
 {
     public static class MacInstaller
     {
@@ -20,18 +20,18 @@ namespace Sudoku.Shared
 
         public static string PythonDirectoryName { get; set; } = "3.7";// = (string) null;
 
-        public static MacInstaller.InstallationSource Source { get; set; } = (MacInstaller.InstallationSource)new MacInstaller.DownloadInstallationSource()
+        public static InstallationSource Source { get; set; } = new DownloadInstallationSource()
         {
             DownloadUrl = "https://www.python.org/ftp/python/3.7.3/python-3.7.3-embed-amd64.zip"
         };
 
-        public static string InstallPythonHome => !string.IsNullOrWhiteSpace(MacInstaller.PythonDirectoryName) ? Path.Combine(MacInstaller.InstallPath, MacInstaller.PythonDirectoryName) : Path.Combine(MacInstaller.InstallPath, MacInstaller.Source.GetPythonDistributionName());
+        public static string InstallPythonHome => !string.IsNullOrWhiteSpace(PythonDirectoryName) ? Path.Combine(InstallPath, PythonDirectoryName) : Path.Combine(InstallPath, Source.GetPythonDistributionName());
 
         public static event Action<string> LogMessage;
 
         private static void Log(string message)
         {
-            Action<string> logMessage = MacInstaller.LogMessage;
+            Action<string> logMessage = LogMessage;
             if (logMessage == null)
                 return;
             logMessage(message);
@@ -39,91 +39,91 @@ namespace Sudoku.Shared
 
         public static async Task SetupPython(bool force = false)
         {
-            Environment.SetEnvironmentVariable("PATH", MacInstaller.InstallPythonHome + ";" + Environment.GetEnvironmentVariable("PATH"));
-            if (!force && Directory.Exists(MacInstaller.InstallPythonHome) && File.Exists(Path.Combine(MacInstaller.InstallPythonHome, "python.exe")))
+            Environment.SetEnvironmentVariable("PATH", InstallPythonHome + ";" + Environment.GetEnvironmentVariable("PATH"));
+            if (!force && Directory.Exists(InstallPythonHome) && File.Exists(Path.Combine(InstallPythonHome, "python.exe")))
                 ;
             else
             {
-                string zip = await MacInstaller.Source.RetrievePythonZip(MacInstaller.InstallPath);
+                string zip = await Source.RetrievePythonZip(InstallPath);
                 if (string.IsNullOrWhiteSpace(zip))
-                    MacInstaller.Log("SetupPython: Error obtaining zip file from installation source");
+                    Log("SetupPython: Error obtaining zip file from installation source");
                 else
-                    await Task.Run((Action)(() =>
+                    await Task.Run(() =>
                     {
                         try
                         {
                             ZipFile.ExtractToDirectory(zip, zip.Replace(".zip", ""));
-                            File.Delete(Path.Combine(MacInstaller.InstallPythonHome, MacInstaller.Source.GetPythonVersion() + "._pth"));
+                            File.Delete(Path.Combine(InstallPythonHome, Source.GetPythonVersion() + "._pth"));
                         }
                         catch (Exception ex)
                         {
-                            MacInstaller.Log("SetupPython: Error extracting zip file: " + zip);
+                            Log("SetupPython: Error extracting zip file: " + zip);
                         }
-                    }));
+                    });
             }
         }
 
         public static async Task InstallWheel(Assembly assembly, string resource_name, bool force = false)
         {
-            string key = MacInstaller.GetResourceKey(assembly, resource_name);
+            string key = GetResourceKey(assembly, resource_name);
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentException("The resource '" + resource_name + "' was not found in assembly '" + assembly.FullName + "'");
-            string path2 = ((IEnumerable<string>)resource_name.Split(new char[1]
+            string path2 = resource_name.Split(new char[1]
             {
                 '-'
-            })).FirstOrDefault<string>();
+            }).FirstOrDefault();
             if (string.IsNullOrWhiteSpace(path2))
                 throw new ArgumentException("The resource name '" + resource_name + "' did not contain a valid module name");
-            string lib = MacInstaller.GetLibDirectory();
+            string lib = GetLibDirectory();
             string path = Path.Combine(lib, path2);
             if (!force && Directory.Exists(path))
             {
-                lib = (string)null;
+                lib = null;
             }
             else
             {
                 string wheelPath = Path.Combine(lib, key);
-                await Task.Run((Action)(() => MacInstaller.CopyEmbeddedResourceToFile(assembly, key, wheelPath, force))).ConfigureAwait(false);
-                await MacInstaller.InstallLocalWheel(wheelPath, lib).ConfigureAwait(false);
-                lib = (string)null;
+                await Task.Run(() => CopyEmbeddedResourceToFile(assembly, key, wheelPath, force)).ConfigureAwait(false);
+                await InstallLocalWheel(wheelPath, lib).ConfigureAwait(false);
+                lib = null;
             }
         }
 
         public static async Task InstallWheel(string wheelPath, bool force = false)
         {
-            string nameFromWheelFile = MacInstaller.GetModuleNameFromWheelFile(wheelPath);
-            string libDirectory = MacInstaller.GetLibDirectory();
+            string nameFromWheelFile = GetModuleNameFromWheelFile(wheelPath);
+            string libDirectory = GetLibDirectory();
             string path = Path.Combine(libDirectory, nameFromWheelFile);
             if (!force && Directory.Exists(path))
                 return;
-            await MacInstaller.InstallLocalWheel(wheelPath, libDirectory).ConfigureAwait(false);
+            await InstallLocalWheel(wheelPath, libDirectory).ConfigureAwait(false);
         }
 
         private static string GetModuleNameFromWheelFile(string wheelPath)
         {
             string fileName = Path.GetFileName(wheelPath);
-            string str = ((IEnumerable<string>)fileName.Split(new char[1]
+            string str = fileName.Split(new char[1]
             {
                 '-'
-            })).FirstOrDefault<string>();
+            }).FirstOrDefault();
             return !string.IsNullOrWhiteSpace(str) ? str : throw new ArgumentException("The file name '" + fileName + "' did not contain a valid module name");
         }
 
         private static string GetLibDirectory()
         {
-            string path = Path.Combine(MacInstaller.InstallPythonHome, "Lib");
+            string path = Path.Combine(InstallPythonHome, "Lib");
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
             return path;
         }
 
-        private static async Task InstallLocalWheel(string wheelPath, string lib) => await Task.Run((Action)(() =>
+        private static async Task InstallLocalWheel(string wheelPath, string lib) => await Task.Run(() =>
         {
             try
             {
                 using (ZipArchive zipArchive = ZipFile.OpenRead(wheelPath))
                 {
-                    if (!MacInstaller.AreAllFilesAlreadyPresent(zipArchive, lib))
+                    if (!AreAllFilesAlreadyPresent(zipArchive, lib))
                         zipArchive.ExtractToDirectory(lib);
                 }
             }
@@ -132,38 +132,38 @@ namespace Sudoku.Shared
                 Console.WriteLine("Error extracting zip file: " + wheelPath);
             }
             File.Delete(wheelPath);
-            string path = Path.Combine(MacInstaller.InstallPythonHome, MacInstaller.Source.GetPythonVersion() + "._pth");
-            if (!File.Exists(path) || ((IEnumerable<string>)File.ReadAllLines(path)).Contains<string>("./Lib"))
+            string path = Path.Combine(InstallPythonHome, Source.GetPythonVersion() + "._pth");
+            if (!File.Exists(path) || File.ReadAllLines(path).Contains("./Lib"))
                 return;
             File.AppendAllLines(path, (IEnumerable<string>)new string[1]
             {
                 "./Lib"
             });
-        })).ConfigureAwait(false);
+        }).ConfigureAwait(false);
 
         public static void PipInstallWheel(Assembly assembly, string resource_name, bool force = false)
         {
-            string resourceKey = MacInstaller.GetResourceKey(assembly, resource_name);
+            string resourceKey = GetResourceKey(assembly, resource_name);
             if (string.IsNullOrWhiteSpace(resourceKey))
                 throw new ArgumentException("The resource '" + resource_name + "' was not found in assembly '" + assembly.FullName + "'");
-            string path2 = ((IEnumerable<string>)resource_name.Split(new char[1]
+            string path2 = resource_name.Split(new char[1]
             {
                 '-'
-            })).FirstOrDefault<string>();
+            }).FirstOrDefault();
             if (string.IsNullOrWhiteSpace(path2))
                 throw new ArgumentException("The resource name '" + resource_name + "' did not contain a valid module name");
-            string str1 = Path.Combine(MacInstaller.InstallPythonHome, "Lib");
+            string str1 = Path.Combine(InstallPythonHome, "Lib");
             if (!Directory.Exists(str1))
                 Directory.CreateDirectory(str1);
             string path = Path.Combine(str1, path2);
             if (!force && Directory.Exists(path))
                 return;
             string filePath = Path.Combine(str1, resourceKey);
-            string str2 = Path.Combine(MacInstaller.InstallPythonHome, "Scripts", "pip3");
-            MacInstaller.CopyEmbeddedResourceToFile(assembly, resourceKey, filePath, force);
-            MacInstaller.TryInstallPip();
+            string str2 = Path.Combine(InstallPythonHome, "Scripts", "pip3");
+            CopyEmbeddedResourceToFile(assembly, resourceKey, filePath, force);
+            TryInstallPip();
             string str3 = filePath;
-            MacInstaller.RunCommand(str2 + " install " + str3);
+            RunCommand(str2 + " install " + str3);
         }
 
         private static void CopyEmbeddedResourceToFile(
@@ -174,9 +174,9 @@ namespace Sudoku.Shared
         {
             if (!force && File.Exists(filePath))
                 return;
-            string resourceKey = MacInstaller.GetResourceKey(assembly, resourceName);
+            string resourceKey = GetResourceKey(assembly, resourceName);
             if (resourceKey == null)
-                MacInstaller.Log("Error: Resource name '" + resourceName + "' not found in assembly " + assembly.FullName + "!");
+                Log("Error: Resource name '" + resourceName + "' not found in assembly " + assembly.FullName + "!");
             try
             {
                 using (Stream manifestResourceStream = assembly.GetManifestResourceStream(resourceKey))
@@ -185,53 +185,53 @@ namespace Sudoku.Shared
                     {
                         if (manifestResourceStream == null)
                         {
-                            MacInstaller.Log("CopyEmbeddedResourceToFile: Resource name '" + resourceName + "' not found!");
+                            Log("CopyEmbeddedResourceToFile: Resource name '" + resourceName + "' not found!");
                             throw new ArgumentException("Resource name '" + resourceName + "' not found!");
                         }
-                        manifestResourceStream.CopyTo((Stream)destination);
+                        manifestResourceStream.CopyTo(destination);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MacInstaller.Log("Error: unable to extract embedded resource '" + resourceName + "' from  " + assembly.FullName + ": " + ex.Message);
+                Log("Error: unable to extract embedded resource '" + resourceName + "' from  " + assembly.FullName + ": " + ex.Message);
             }
         }
 
-        public static string GetResourceKey(Assembly assembly, string embedded_file) => ((IEnumerable<string>)assembly.GetManifestResourceNames()).FirstOrDefault<string>((Func<string, bool>)(x => x.Contains(embedded_file)));
+        public static string GetResourceKey(Assembly assembly, string embedded_file) => assembly.GetManifestResourceNames().FirstOrDefault(x => x.Contains(embedded_file));
 
         public static void PipInstallModule(string module_name, string version = "", bool force = false)
         {
-            MacInstaller.TryInstallPip();
-            if (MacInstaller.IsModuleInstalled(module_name) && !force)
+            TryInstallPip();
+            if (IsModuleInstalled(module_name) && !force)
                 return;
             // string str1 = Path.Combine(MacInstaller.EmbeddedPythonHome, "Scripts", "pip");
-            string str1 = Path.Combine(MacInstaller.InstallPythonHome, "bin", "pip3");
+            string str1 = Path.Combine(InstallPythonHome, "bin", "pip3");
             // string str1 = "pip3";
             string str2 = force ? " --force-reinstall" : "";
             if (version.Length > 0)
                 version = "==" + version;
-            MacInstaller.RunCommand($"{str1} --version");
-            MacInstaller.RunCommand($"{str1} install {module_name}{version} {str2}");
+            RunCommand($"{str1} --version");
+            RunCommand($"{str1} install {module_name}{version} {str2}");
         }
 
         public static void InstallPip()
         {
-            string path = Path.Combine(MacInstaller.InstallPythonHome, "Lib");
+            string path = Path.Combine(InstallPythonHome, "Lib");
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
-            MacInstaller.RunCommand("cd " + path + " && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py");
+            RunCommand("cd " + path + " && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py");
             // MacInstaller.RunCommand("cd " + MacInstaller.EmbeddedPythonHome + " && python.exe Lib\\get-pip.py");
-            MacInstaller.RunCommand("cd " + MacInstaller.InstallPythonHome + " && python get-pip.py");
+            RunCommand("cd " + InstallPythonHome + " && python get-pip.py");
         }
 
         public static bool TryInstallPip(bool force = false)
         {
-            if (!(!MacInstaller.IsPipInstalled() | force))
+            if (!(!IsPipInstalled() | force))
                 return false;
             try
             {
-                MacInstaller.InstallPip();
+                InstallPip();
                 return true;
             }
             catch (Exception ex)
@@ -241,19 +241,19 @@ namespace Sudoku.Shared
             }
         }
 
-        public static bool IsPythonInstalled() => File.Exists(Path.Combine(MacInstaller.InstallPythonHome, "Python"));
+        public static bool IsPythonInstalled() => File.Exists(Path.Combine(InstallPythonHome, "Python"));
 
-        public static bool IsPipInstalled() => File.Exists(Path.Combine(MacInstaller.InstallPythonHome, "bin", "pip3"));
+        public static bool IsPipInstalled() => File.Exists(Path.Combine(InstallPythonHome, "bin", "pip3"));
 
         public static bool IsModuleInstalled(string module)
         {
-            if (!MacInstaller.IsPythonInstalled())
+            if (!IsPythonInstalled())
                 return false;
-            string str = Path.Combine(MacInstaller.InstallPythonHome, "Lib", "site-packages", module);
+            string str = Path.Combine(InstallPythonHome, "Lib", "site-packages", module);
             return Directory.Exists(str) && File.Exists(Path.Combine(str, "__init__.py"));
         }
 
-        public static void RunCommand(string command) => MacInstaller.RunCommand(command, CancellationToken.None).Wait();
+        public static void RunCommand(string command) => RunCommand(command, CancellationToken.None).Wait();
 
         public static async Task RunCommand(string command, CancellationToken token)
         {
@@ -273,11 +273,11 @@ namespace Sudoku.Shared
                     str1 = "cmd.exe";
                     str2 = "/C " + command;
                 }
-                MacInstaller.Log("> " + str1 + " " + str2);
+                Log("> " + str1 + " " + str2);
                 process.StartInfo = new ProcessStartInfo()
                 {
                     FileName = str1,
-                    WorkingDirectory = MacInstaller.InstallPythonHome,
+                    WorkingDirectory = InstallPythonHome,
                     Arguments = str2,
                     CreateNoWindow = true,
                     UseShellExecute = false,
@@ -286,12 +286,12 @@ namespace Sudoku.Shared
                     RedirectStandardOutput = true,
                     WindowStyle = ProcessWindowStyle.Hidden
                 };
-                process.OutputDataReceived += (DataReceivedEventHandler)((x, y) => MacInstaller.Log(y.Data));
-                process.ErrorDataReceived += (DataReceivedEventHandler)((x, y) => MacInstaller.Log(y.Data));
+                process.OutputDataReceived += (x, y) => Log(y.Data);
+                process.ErrorDataReceived += (x, y) => Log(y.Data);
                 process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
-                token.Register((Action)(() =>
+                token.Register(() =>
                 {
                     try
                     {
@@ -302,16 +302,16 @@ namespace Sudoku.Shared
                     catch (Exception ex)
                     {
                     }
-                }));
-                await Task.Run((Action)(() => process.WaitForExit()), token);
+                });
+                await Task.Run(() => process.WaitForExit(), token);
                 // if (process.ExitCode == 0)
                 //   ;
                 // else
-                MacInstaller.Log(" => exit code " + process.ExitCode.ToString());
+                Log(" => exit code " + process.ExitCode.ToString());
             }
             catch (Exception ex)
             {
-                MacInstaller.Log("RunCommand: Error with command: '" + command + "'\r\n" + ex.Message);
+                Log("RunCommand: Error with command: '" + command + "'\r\n" + ex.Message);
             }
             finally
             {
@@ -333,21 +333,21 @@ namespace Sudoku.Shared
             return flag;
         }
 
-        public class DownloadInstallationSource : MacInstaller.InstallationSource
+        public class DownloadInstallationSource : InstallationSource
         {
             public string DownloadUrl { get; set; }
 
             public override async Task<string> RetrievePythonZip(string destinationDirectory)
             {
-                MacInstaller.DownloadInstallationSource installationSource = this;
+                DownloadInstallationSource installationSource = this;
                 string zipFile = Path.Combine(destinationDirectory, installationSource.GetPythonZipFileName());
                 if (!installationSource.Force && File.Exists(zipFile))
                     return zipFile;
-                await MacInstaller.DownloadInstallationSource.RunCommand("curl " + installationSource.DownloadUrl + " -o " + zipFile, CancellationToken.None);
+                await RunCommand("curl " + installationSource.DownloadUrl + " -o " + zipFile, CancellationToken.None);
                 return zipFile;
             }
 
-            public override string GetPythonZipFileName() => Path.GetFileName(new Uri(this.DownloadUrl).LocalPath);
+            public override string GetPythonZipFileName() => Path.GetFileName(new Uri(DownloadUrl).LocalPath);
 
             public static async Task RunCommand(string command, CancellationToken token)
             {
@@ -367,7 +367,7 @@ namespace Sudoku.Shared
                         str1 = "cmd.exe";
                         str2 = "/C " + command;
                     }
-                    MacInstaller.Log("> " + str1 + " " + str2);
+                    Log("> " + str1 + " " + str2);
                     process.StartInfo = new ProcessStartInfo()
                     {
                         FileName = str1,
@@ -380,12 +380,12 @@ namespace Sudoku.Shared
                         RedirectStandardOutput = true,
                         WindowStyle = ProcessWindowStyle.Hidden
                     };
-                    process.OutputDataReceived += (DataReceivedEventHandler)((x, y) => MacInstaller.Log(y.Data));
-                    process.ErrorDataReceived += (DataReceivedEventHandler)((x, y) => MacInstaller.Log(y.Data));
+                    process.OutputDataReceived += (x, y) => Log(y.Data);
+                    process.ErrorDataReceived += (x, y) => Log(y.Data);
                     process.Start();
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
-                    token.Register((Action)(() =>
+                    token.Register(() =>
                     {
                         try
                         {
@@ -396,16 +396,16 @@ namespace Sudoku.Shared
                         catch (Exception ex)
                         {
                         }
-                    }));
-                    await Task.Run((Action)(() => process.WaitForExit()), token);
+                    });
+                    await Task.Run(() => process.WaitForExit(), token);
                     if (process.ExitCode == 0)
                         ;
                     else
-                        MacInstaller.Log(" => exit code " + process.ExitCode.ToString());
+                        Log(" => exit code " + process.ExitCode.ToString());
                 }
                 catch (Exception ex)
                 {
-                    MacInstaller.Log("RunCommand: Error with command: '" + command + "'\r\n" + ex.Message);
+                    Log("RunCommand: Error with command: '" + command + "'\r\n" + ex.Message);
                 }
                 finally
                 {
@@ -414,7 +414,7 @@ namespace Sudoku.Shared
             }
         }
 
-        public class EmbeddedResourceInstallationSource : MacInstaller.InstallationSource
+        public class EmbeddedResourceInstallationSource : InstallationSource
         {
             public Assembly Assembly { get; set; }
 
@@ -422,15 +422,15 @@ namespace Sudoku.Shared
 
             public override async Task<string> RetrievePythonZip(string destinationDirectory)
             {
-                MacInstaller.EmbeddedResourceInstallationSource installationSource = this;
+                EmbeddedResourceInstallationSource installationSource = this;
                 string str = Path.Combine(destinationDirectory, installationSource.ResourceName);
                 if (!installationSource.Force && File.Exists(str))
                     return str;
-                MacInstaller.CopyEmbeddedResourceToFile(installationSource.Assembly, installationSource.GetPythonDistributionName(), str);
+                CopyEmbeddedResourceToFile(installationSource.Assembly, installationSource.GetPythonDistributionName(), str);
                 return str;
             }
 
-            public override string GetPythonZipFileName() => Path.GetFileName(this.ResourceName);
+            public override string GetPythonZipFileName() => Path.GetFileName(ResourceName);
         }
 
         public abstract class InstallationSource
@@ -441,19 +441,19 @@ namespace Sudoku.Shared
 
             public virtual string GetPythonDistributionName()
             {
-                string pythonZipFileName = this.GetPythonZipFileName();
-                return pythonZipFileName == null ? (string)null : Path.GetFileNameWithoutExtension(pythonZipFileName);
+                string pythonZipFileName = GetPythonZipFileName();
+                return pythonZipFileName == null ? null : Path.GetFileNameWithoutExtension(pythonZipFileName);
             }
 
             public abstract string GetPythonZipFileName();
 
             public virtual string GetPythonVersion()
             {
-                Match match = Regex.Match(this.GetPythonDistributionName(), "python-(?<major>\\d)\\.(?<minor>\\d+)");
+                Match match = Regex.Match(GetPythonDistributionName(), "python-(?<major>\\d)\\.(?<minor>\\d+)");
                 if (match.Success)
-                    return string.Format("python{0}{1}", (object)match.Groups["major"], (object)match.Groups["minor"]);
-                MacInstaller.Log("Unable to get python version from distribution name.");
-                return (string)null;
+                    return string.Format("python{0}{1}", match.Groups["major"], match.Groups["minor"]);
+                Log("Unable to get python version from distribution name.");
+                return null;
             }
         }
     }
