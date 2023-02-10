@@ -5,7 +5,7 @@ using Sudoku.Shared;
 
 namespace Sudoku.Backtracking
 {
-    public class Backtrackingsolver1 : PythonSolverBase
+    public class BacktrackingPythonSolver1 : PythonSolverBase
 
     {
         public override Shared.SudokuGrid Solve(Shared.SudokuGrid s)

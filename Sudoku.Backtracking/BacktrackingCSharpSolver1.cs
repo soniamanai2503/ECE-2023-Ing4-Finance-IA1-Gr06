@@ -9,7 +9,7 @@ using Sudoku.Shared;
 
 namespace Sudoku.Backtracking
 {
-    public class BacktrackingsolverCS1 : ISudokuSolver
+    public class BacktrackingCSharpSolver1 : ISudokuSolver
     {
 
         public SudokuGrid Solve(SudokuGrid s)

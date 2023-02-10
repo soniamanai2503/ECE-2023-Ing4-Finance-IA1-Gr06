@@ -12,8 +12,8 @@
 
 
 
-from timeit import default_timer
-import numpy as np
+#from timeit import default_timer
+#import numpy as np
 '''instance = ((0,0,0,0,9,0,0,3,0),
             (0,0,0,5,1,0,0,0,7),
             (0,8,9,0,0,0,0,0,0),
@@ -64,14 +64,14 @@ def solveSudoku(grid, i=0, j=0):
                         grid[i][j] = 0
         return False
 
-start = default_timer()
+#start = default_timer()
 if(solveSudoku(instance)):
 	#print_grid(instance)
 	r=instance
 else:
 	print ("Aucune solution trouvée")
 
-execution = default_timer() - start
-print("Le temps de résolution est de : ", execution, " seconds as a floating point value")
+#execution = default_timer() - start
+#print("Le temps de résolution est de : ", execution, " seconds as a floating point value")
 
 
