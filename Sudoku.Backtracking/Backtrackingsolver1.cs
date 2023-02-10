@@ -2,6 +2,7 @@
 using System.Resources;
 using Sudoku.Shared;
 
+
 namespace Sudoku.Backtracking
 {
     public class Backtrackingsolver1 : PythonSolverBase
